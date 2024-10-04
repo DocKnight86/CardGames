@@ -1,0 +1,41 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\knigh\\OneDrive\\Desktop\\CardGames\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\CardGames.bundle.scp.css",
+      "PackagePath": "staticwebassets\\CardGames.bundle.scp.css"
+    },
+    {
+      "Id": "C:\\Users\\knigh\\OneDrive\\Desktop\\CardGames\\wwwroot\\app.css",
+      "PackagePath": "staticwebassets\\app.css"
+    },
+    {
+      "Id": "C:\\Users\\knigh\\OneDrive\\Desktop\\CardGames\\wwwroot\\bootstrap\\bootstrap.min.css",
+      "PackagePath": "staticwebassets\\bootstrap\\bootstrap.min.css"
+    },
+    {
+      "Id": "C:\\Users\\knigh\\OneDrive\\Desktop\\CardGames\\wwwroot\\bootstrap\\bootstrap.min.css.map",
+      "PackagePath": "staticwebassets\\bootstrap\\bootstrap.min.css.map"
+    },
+    {
+      "Id": "C:\\Users\\knigh\\OneDrive\\Desktop\\CardGames\\wwwroot\\favicon.png",
+      "PackagePath": "staticwebassets\\favicon.png"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.CardGames.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.CardGames.props",
+      "PackagePath": "build\\CardGames.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.CardGames.props",
+      "PackagePath": "buildMultiTargeting\\CardGames.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.CardGames.props",
+      "PackagePath": "buildTransitive\\CardGames.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

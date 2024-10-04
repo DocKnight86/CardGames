@@ -1,0 +1,123 @@
+﻿@rendermode InteractiveServer
+@page "/blackjack"
+@inject Services.BlackjackService BlackjackService
+@inject ILogger<Blackjack> Logger
+
+<h3>Blackjack</h3>
+
+<div>
+    <h4>Player's Hand (@BlackjackService.CalculateHandValue(BlackjackService.GetPlayerHand()) points):</h4>
+    <ul>
+        @foreach (var card in BlackjackService.GetPlayerHand())
+        {
+            <li>@card</li>
+        }
+    </ul>
+
+    <h4>Dealer's Hand (@BlackjackService.CalculateHandValue(BlackjackService.GetVisibleDealerHand()) points):</h4>
+    <ul>
+        @foreach (var card in BlackjackService.GetVisibleDealerHand())
+        {
+            <li>@card</li>
+        }
+        @if (!hasPlayerStood)
+        {
+            <li>[Hidden Card]</li> <!-- Hide the second card before player stands -->
+        }
+    </ul>
+
+    <p>@gameResult</p>
+
+    <p>Player Balance: $@playerBalance</p>
+
+    @if (!isGameOver)
+    {
+        <button @onclick="PlayerHit" disabled="@hasPlayerStood">Hit</button>
+        <button @onclick="PlayerStand" disabled="@hasPlayerStood">Stand</button>
+    }
+    else
+    {
+        <button @onclick="StartNewGame">Start New Game</button>
+    }
+</div>
+
+@code {
+    private bool hasPlayerStood = false;
+    private bool isGameOver = false;
+    private string gameResult = string.Empty;
+    private int playerBalance = 500;
+
+    protected override void OnInitialized()
+    {
+        StartNewGame();
+        base.OnInitialized();
+    }
+
+    private void StartNewGame()
+    {
+        BlackjackService.InitializeGame();
+        hasPlayerStood = false;
+        isGameOver = false;
+        gameResult = string.Empty;
+        playerBalance -= 5; // Deduct $5 for each new hand
+        StateHasChanged();
+    }
+
+    private void PlayerHit()
+    {
+        Logger.LogInformation("PlayerHit function activated");
+        BlackjackService.GetPlayerHand().Add(BlackjackService.DrawCard());
+
+        if (BlackjackService.IsGameOver())
+        {
+            EndGame("Player busts!");
+        }
+
+        StateHasChanged();
+    }
+
+    private void PlayerStand()
+    {
+        Logger.LogInformation("PlayerStand function activated");
+        hasPlayerStood = true;
+
+        // Reveal dealer's second card after player stands
+        BlackjackService.RevealDealerHand();
+        BlackjackService.PlayerStands();
+
+        EndGame(DetermineGameResult());
+        StateHasChanged();
+    }
+
+    private void EndGame(string result)
+    {
+        gameResult = result;
+        isGameOver = true;
+    }
+
+    private string DetermineGameResult()
+    {
+        var playerValue = BlackjackService.CalculateHandValue(BlackjackService.GetPlayerHand());
+        var dealerValue = BlackjackService.CalculateHandValue(BlackjackService.GetDealerHand());
+
+        if (dealerValue > 21)
+        {
+            playerBalance += 10; // Player wins $10
+            return "Dealer busts! Player wins.";
+        }
+
+        if (dealerValue > playerValue)
+        {
+            return "Dealer wins.";
+        }
+
+        if (dealerValue == playerValue)
+        {
+            playerBalance += 5; // Tie, refund $5
+            return "It's a tie.";
+        }
+
+        playerBalance += 10; // Player wins $10
+        return "Player wins!";
+    }
+}
