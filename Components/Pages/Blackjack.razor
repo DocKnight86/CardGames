@@ -7,38 +7,54 @@
 <h3>Blackjack</h3>
 
 <div>
-    <h4>Player's Hand (@BlackjackService.CalculateHandValue(BlackjackService.GetPlayerHand()) points):</h4>
-    <ul class="card-list">
-        @foreach (var card in BlackjackService.GetPlayerHand())
-        {
-            <li><img src="@GetCardImage(card)" alt="@card.ToString()" width="100" /></li>
-        }
-    </ul>
-
-    <h4>Dealer's Hand (@BlackjackService.CalculateHandValue(BlackjackService.GetVisibleDealerHand()) points):</h4>
-    <ul class="card-list">
-        @foreach (var card in BlackjackService.GetVisibleDealerHand())
-        {
-            <li><img src="@GetCardImage(card)" alt="@card.ToString()" width="100" /></li>
-        }
-        @if (!hasPlayerStood)
-        {
-            <li>[Hidden Card]</li> <!-- Hide the second card before player stands -->
-        }
-    </ul>
-
-    <p>@gameResult</p>
-
-    <p>Player Balance: $@playerBalance</p>
-
-    @if (!isGameOver)
+    @if (BlackjackService.GetPlayerHand() != null && BlackjackService.GetDealerHand() != null)
     {
-        <button @onclick="PlayerHit" disabled="@hasPlayerStood">Hit</button>
-        <button @onclick="PlayerStand" disabled="@hasPlayerStood">Stand</button>
+        <h4>Player's Hand (@BlackjackService.CalculateHandValue(BlackjackService.GetPlayerHand()) points):</h4>
+        <ul class="card-list">
+            @foreach (Card card in BlackjackService.GetPlayerHand())
+            {
+                <li><img src="@GetCardImage(card)" alt="@card.ToString()" width="100" /></li>
+            }
+        </ul>
+
+        <h4>Dealer's Hand (@BlackjackService.CalculateHandValue(BlackjackService.GetVisibleDealerHand()) points):</h4>
+        <ul class="card-list">
+            @foreach (Card card in BlackjackService.GetVisibleDealerHand())
+            {
+                <li><img src="@GetCardImage(card)" alt="@card.ToString()" width="100" /></li>
+            }
+            @if (!_hasPlayerStood)
+            {
+                <li>[Hidden Card]</li> <!-- Hide the second card before player stands -->
+            }
+        </ul>
     }
     else
     {
+        <p>The game hasn't started yet. Click "Start New Game" to begin.</p>
+    }
+
+    <p>@_gameResult</p>
+
+    <p>Player Balance: $@_playerBalance</p>
+
+    <!-- Always show the "Start New Game" button when the game hasn't started -->
+    @if (BlackjackService.GetPlayerHand() == null || BlackjackService.GetDealerHand() == null)
+    {
         <button @onclick="StartNewGame">Start New Game</button>
+    }
+    else
+    {
+        <!-- Show the Hit and Stand buttons only after the game has started -->
+        @if (!_isGameOver)
+        {
+            <button @onclick="PlayerHit" disabled="@_hasPlayerStood">Hit</button>
+            <button @onclick="PlayerStand" disabled="@_hasPlayerStood">Stand</button>
+        }
+        else
+        {
+            <button @onclick="StartNewGame">Start New Game</button>
+        }
     }
 </div>
 
@@ -51,29 +67,31 @@
         margin: 0;
     }
 
-    .card-list li {
-        margin: 5px;
-    }
+        .card-list li {
+            margin: 5px;
+        }
 
-    .card-list img {
-        max-width: 100px;
-        height: auto;
-    }
+        .card-list img {
+            max-width: 100px;
+            height: auto;
+        }
 </style>
 
 @code {
-    private bool hasPlayerStood = false;
-    private bool isGameOver = false;
-    private string gameResult = string.Empty;
-    private int playerBalance = 500;
+    private bool _hasPlayerStood = false;
+    private bool _isGameOver = false;
+    private string _gameResult = string.Empty;
+    private int _playerBalance = 500;
 
     private void StartNewGame()
     {
         BlackjackService.InitializeGame();
-        hasPlayerStood = false;
-        isGameOver = false;
-        gameResult = string.Empty;
-        playerBalance -= 5; // Deduct $5 for each new hand
+
+        _hasPlayerStood = false;
+        _isGameOver = false;
+        _gameResult = string.Empty;
+        _playerBalance -= 5; // Deduct $5 for each new hand
+
         StateHasChanged();
     }
 
@@ -93,7 +111,7 @@
     private void PlayerStand()
     {
         Logger.LogInformation("PlayerStand function activated");
-        hasPlayerStood = true;
+        _hasPlayerStood = true;
 
         // Reveal dealer's second card after player stands
         BlackjackService.RevealDealerHand();
@@ -105,18 +123,18 @@
 
     private void EndGame(string result)
     {
-        gameResult = result;
-        isGameOver = true;
+        _gameResult = result;
+        _isGameOver = true;
     }
 
     private string DetermineGameResult()
     {
-        var playerValue = BlackjackService.CalculateHandValue(BlackjackService.GetPlayerHand());
-        var dealerValue = BlackjackService.CalculateHandValue(BlackjackService.GetDealerHand());
+        int playerValue = BlackjackService.CalculateHandValue(BlackjackService.GetPlayerHand());
+        int dealerValue = BlackjackService.CalculateHandValue(BlackjackService.GetDealerHand());
 
         if (dealerValue > 21)
         {
-            playerBalance += 10; // Player wins $10
+            _playerBalance += 10; // Player wins $10
             return "Dealer busts! Player wins.";
         }
 
@@ -127,11 +145,11 @@
 
         if (dealerValue == playerValue)
         {
-            playerBalance += 5; // Tie, refund $5
+            _playerBalance += 5; // Tie, refund $5
             return "It's a tie.";
         }
 
-        playerBalance += 10; // Player wins $10
+        _playerBalance += 10; // Player wins $10
         return "Player wins!";
     }
 
@@ -157,7 +175,7 @@
                 break;
         }
 
-        // Append '2' for face cards
+        // Append '2' for face cards to use 2nd style.
         if (value == "king" || value == "queen" || value == "jack")
         {
             return $"/CardImages/{value}_of_{suit}2.png";
