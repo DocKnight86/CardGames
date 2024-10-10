@@ -15,7 +15,7 @@
         <ul class="card-list">
             @foreach (Card card in BlackjackService.GetPlayerHand())
             {
-                <li><img src="@GetCardImage(card)" alt="@card.ToString()" width="100" /></li>
+                <li><img src="@GetCardImage(card)" alt="@card.ToString()" width="100" height="150" /></li>
             }
         </ul>
 
@@ -92,7 +92,7 @@
 
     /* Flip Animation Styles */
     .card-container {
-        perspective: 1500px; /* Perspective to create the 3D effect */
+        perspective: 1500px; /* Perspective for 3D effect */
     }
 
     .card {
@@ -100,7 +100,7 @@
         height: 150px;
         position: relative;
         transform-style: preserve-3d;
-        transition: transform 1s ease-in-out; /* Increased duration for a slower flip */
+        transition: transform 1s ease-in-out;
     }
 
     .flipped {
@@ -111,11 +111,11 @@
         position: absolute;
         width: 100%;
         height: 100%;
-        backface-visibility: hidden; /* Hide the back when flipping */
+        backface-visibility: hidden;
     }
 
     .card-back {
-        transform: rotateY(180deg); /* Rotate the back face by 180 degrees */
+        transform: rotateY(180deg);
     }
 </style>
 
@@ -175,7 +175,7 @@
         StateHasChanged();
     }
 
-    private void PlayerHit()
+    private async Task PlayerHit()
     {
         Logger.LogInformation("PlayerHit function activated");
         BlackjackService.GetPlayerHand().Add(BlackjackService.DrawCard());
@@ -191,27 +191,41 @@
         StateHasChanged();
     }
 
-    private async void PlayerStand()
+    private async Task PlayerStand()
     {
         Logger.LogInformation("PlayerStand function activated");
         _hasPlayerStood = true;
 
-        // Reveal dealer's second card after player stands
+        // Trigger the flip animation by setting this
         BlackjackService.RevealDealerHand();
-
-        // Notify others about the stand
-        SendMove("stood");
-
         StateHasChanged();
 
-        // Introduce a delay to give time for the card to flip before proceeding with the game logic
+        // Delay for card flip animation to complete
         await Task.Delay(1000); // 1-second delay to simulate the dealer revealing the card
 
-        // Continue with the dealer's actions after the delay
-        BlackjackService.PlayerStands(_player); // Pass player name
-        EndGame(DetermineGameResult());
+        // Let the dealer finish their hand
+        await DealerPlay();
+    }
 
-        StateHasChanged();
+    private async Task DealerPlay()
+    {
+        int dealerValue = BlackjackService.CalculateHandValue(BlackjackService.GetDealerHand());
+
+        // Dealer will stand if their value is >= 17, otherwise they draw a card
+        while (dealerValue < 17)
+        {
+            // Dealer draws a card
+            BlackjackService.GetDealerHand().Add(BlackjackService.DrawCard());
+            StateHasChanged(); // Update the UI to reflect the new card
+
+            // Delay before drawing the next card
+            await Task.Delay(1000); // 1-second delay
+
+            dealerValue = BlackjackService.CalculateHandValue(BlackjackService.GetDealerHand());
+        }
+
+        // Check the final game result and end the game
+        EndGame(DetermineGameResult());
     }
 
     private void EndGame(string result)
