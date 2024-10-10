@@ -1,8 +1,10 @@
 ﻿@rendermode InteractiveServer
 @page "/blackjack"
 @using CardGames.Services
+@using Microsoft.AspNetCore.SignalR.Client
 @inject BlackjackService BlackjackService
 @inject ILogger<Blackjack> Logger
+@inject NavigationManager Navigation
 
 <h3>Blackjack</h3>
 
@@ -83,6 +85,40 @@
     private string _gameResult = string.Empty;
     private int _playerBalance = 500;
 
+    // SignalR HubConnection
+    private HubConnection _hubConnection;
+    private List<string> _moves = new List<string>();
+    private string _player = "Player1"; // Temporary placeholder for player name
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/gameHub"))
+            .Build();
+
+        _hubConnection.On<string, string>("ReceiveMove", (player, move) =>
+        {
+            _moves.Add($"{player}: {move}");
+            Logger.LogInformation($"{player}: {move}"); // Log received move
+            StateHasChanged();
+        });
+
+        await _hubConnection.StartAsync();
+        await _hubConnection.InvokeAsync("JoinGame", "gameId_123"); // Replace with dynamic game ID
+    }
+
+    private async Task SendMove(string move)
+    {
+        await _hubConnection.InvokeAsync("SendMove", "gameId_123", _player, move);
+        Logger.LogInformation($"Player {_player} sent move: {move}");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _hubConnection.InvokeAsync("LeaveGame", "gameId_123");
+        await _hubConnection.DisposeAsync();
+    }
+
     private void StartNewGame()
     {
         BlackjackService.InitializeGame();
@@ -91,6 +127,9 @@
         _isGameOver = false;
         _gameResult = string.Empty;
         _playerBalance -= 5; // Deduct $5 for each new hand
+
+        // Notify others about the game start
+        SendMove("started a new game");
 
         StateHasChanged();
     }
@@ -105,6 +144,9 @@
             EndGame("Player busts!");
         }
 
+        // Notify others about the hit
+        SendMove("hit");
+
         StateHasChanged();
     }
 
@@ -115,9 +157,15 @@
 
         // Reveal dealer's second card after player stands
         BlackjackService.RevealDealerHand();
-        BlackjackService.PlayerStands();
+    
+        // Pass the player's name when calling PlayerStands
+        BlackjackService.PlayerStands(_player);
 
         EndGame(DetermineGameResult());
+
+        // Notify others about the stand
+        SendMove("stood");
+
         StateHasChanged();
     }
 

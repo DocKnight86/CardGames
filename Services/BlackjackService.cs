@@ -1,4 +1,7 @@
-﻿namespace CardGames.Services
+﻿using Microsoft.AspNetCore.SignalR;
+using CardGames.Hubs;
+
+namespace CardGames.Services
 {
     public class BlackjackService
     {
@@ -6,6 +9,12 @@
         private List<Card> _playerHand;
         private List<Card> _dealerHand;
         private bool _dealerHandRevealed;
+        private readonly IHubContext<GameHub> _hubContext; // Injecting SignalR Hub
+
+        public BlackjackService(IHubContext<GameHub> hubContext) // Constructor receives SignalR Hub
+        {
+            _hubContext = hubContext;
+        }
 
         public void InitializeGame()
         {
@@ -21,7 +30,7 @@
             _dealerHand.Add(DrawCard());  // Hidden card
         }
 
-        public void PlayerStands()
+        public void PlayerStands(string playerName)
         {
             int playerValue = CalculateHandValue(_playerHand);
             int dealerValue = CalculateHandValue(_dealerHand);
@@ -29,7 +38,10 @@
             // Reveal dealer's second card
             RevealDealerHand();
 
-            // Dealer will stand if their value is >= 17, otherwise they draw a card
+            // Notify other players
+            _hubContext.Clients.All.SendAsync("ReceiveMove", playerName, "stands");
+
+            // Dealer logic
             while (dealerValue < 17)
             {
                 _dealerHand.Add(DrawCard());
@@ -38,18 +50,18 @@
 
             if (dealerValue > 21)
             {
-                // Dealer busts, player wins
-                Console.WriteLine("Dealer busts! Player wins.");
+                // Notify dealer bust
+                _hubContext.Clients.All.SendAsync("ReceiveMove", playerName, "Dealer busts! Player wins.");
             }
             else if (dealerValue >= playerValue)
             {
-                // Dealer wins if their hand is greater than or equal to the player's hand
-                Console.WriteLine("Dealer wins.");
+                // Notify dealer wins
+                _hubContext.Clients.All.SendAsync("ReceiveMove", playerName, "Dealer wins.");
             }
             else
             {
-                // Player wins if their hand is higher than the dealer's hand
-                Console.WriteLine("Player wins.");
+                // Notify player wins
+                _hubContext.Clients.All.SendAsync("ReceiveMove", playerName, "Player wins.");
             }
         }
 
@@ -91,12 +103,10 @@
         {
             Card card = _deck.First();
             _deck.Remove(card);
-
             return card;
         }
 
         public List<Card> GetPlayerHand() => _playerHand;
-
         public List<Card> GetDealerHand() => _dealerHand;
 
         public int CalculateHandValue(List<Card> hand)
