@@ -224,16 +224,17 @@
 
     /* Player's score display (score above cards) */
     .player-hand-header {
-        position: relative; /* Ensures the score is properly placed above the cards */
+        position: relative;
         font-size: 1.5em;
         text-align: center;
-        margin-bottom: 10px; /* Space between the score and the cards */
+        margin-bottom: 10px; /* Space between score and cards */
+        z-index: 20;
     }
 
     /* Player's card display (cards directly below score) */
     .player-cards-container {
         position: absolute;
-        top: 60%; /* Adjust for positioning above the player's spot */
+        top: 45%; /* Move the cards higher to prevent overlap */
         left: 20%; /* Align with player-1 */
         transform: translate(-50%, -50%);
         display: flex;
@@ -244,7 +245,7 @@
     .player-cards {
         display: flex;
         justify-content: center;
-        margin-top: 10px; /* Adds space between the score and cards */
+        z-index: 10;
     }
 
     /* Player Balance positioning */
@@ -258,7 +259,7 @@
     /* Button positioning and spacing */
     .game-buttons {
         position: absolute;
-        top: 80%;
+        top: 85%;
         left: 50%;
         transform: translate(-50%, -50%);
         display: flex;
@@ -271,16 +272,13 @@
 
     .game-result {
         position: absolute;
-        top: 90%;
-        left: 50%;
+        top: 20%;
+        left: 20%;
         transform: translate(-50%, -50%);
         font-size: 1.5em;
         color: red;
     }
 </style>
-
-
-
 
 @code {
     private bool _hasPlayerStood = false;

@@ -1,8 +1,5 @@
 ﻿﻿using Microsoft.AspNetCore.SignalR;
 using CardGames.Hubs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace CardGames.Services
 {
@@ -129,7 +126,7 @@ namespace CardGames.Services
             return totalValue;
         }
 
-        public virtual bool IsGameOver() => CalculateHandValue(_playerHand) >= 21 || CalculateHandValue(_dealerHand) >= 21;
+        public virtual bool IsGameOver() => CalculateHandValue(_playerHand) > 21 || CalculateHandValue(_dealerHand) > 21;
     }
 
     public class Card
