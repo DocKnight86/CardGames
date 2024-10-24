@@ -93,6 +93,12 @@ namespace CardGames.Services
 
         public int CalculateHandValue(List<Card> hand)
         {
+            // Safeguard: return 0 if hand is null or empty
+            if (hand == null || hand.Count == 0)
+            {
+                return 0;
+            }
+
             int totalValue = 0;
             int aceCount = 0;
 
