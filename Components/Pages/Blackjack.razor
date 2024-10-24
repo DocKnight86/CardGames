@@ -8,74 +8,102 @@
 
 <h3>Blackjack</h3>
 
-<div>
-    @if (BlackjackService.GetPlayerHand() != null && BlackjackService.GetDealerHand() != null)
-    {
-        <h4>Player's Hand (@BlackjackService.CalculateHandValue(BlackjackService.GetPlayerHand()) points):</h4>
-        <ul class="card-list">
-            @foreach (Card card in BlackjackService.GetPlayerHand())
-            {
-                <li><img src="@GetCardImage(card)" alt="@card.ToString()" width="100" height="150" /></li>
-            }
-        </ul>
-
+<div class="table-container">
+    <!-- Dealer's Cards at the top center -->
+    <div class="dealer">
         <h4>Dealer's Hand (@BlackjackService.CalculateHandValue(BlackjackService.GetVisibleDealerHand()) points):</h4>
         <ul class="card-list">
-            @foreach (Card card in BlackjackService.GetVisibleDealerHand())
+            @if (BlackjackService.GetVisibleDealerHand() != null && BlackjackService.GetVisibleDealerHand().Count > 0)
             {
-                <li><img src="@GetCardImage(card)" alt="@card.ToString()" width="100" height="150" /></li>
-            }
-            @if (!_hasPlayerStood)
-            {
-                <!-- Add card container and flip animation -->
-                <li class="card-container">
-                    <div class="card @( _hasPlayerStood ? "flipped" : "")">
-                        <!-- Front of the card (hidden side before flipping) -->
-                        <div class="card-front">
-                            <img src="/CardImages/front.png" alt="Hidden Card" width="100" height="150" />
+                @foreach (Card card in BlackjackService.GetVisibleDealerHand())
+                {
+                    <li><img src="@GetCardImage(card)" alt="@card.ToString()" width="100" height="150" /></li>
+                }
+                @if (!_hasPlayerStood && BlackjackService.GetDealerHand() != null && BlackjackService.GetDealerHand().Count > 1)
+                {
+                    <!-- Add card container and flip animation -->
+                    <li class="card-container">
+                        <div class="card @( _hasPlayerStood ? "flipped" : "")">
+                            <!-- Front of the card (hidden side before flipping) -->
+                            <div class="card-front">
+                                <img src="/CardImages/front.png" alt="Hidden Card" width="100" height="150" />
+                            </div>
+                            <!-- Back of the card (actual card face that will show after flipping) -->
+                            <div class="card-back">
+                                <img src="@GetCardImage(BlackjackService.GetDealerHand()[1])" alt="Dealer Card" width="100" height="150" />
+                            </div>
                         </div>
-                        <!-- Back of the card (actual card face that will show after flipping) -->
-                        <div class="card-back">
-                            <img src="@GetCardImage(BlackjackService.GetDealerHand()[1])" alt="Dealer Card" width="100" height="150" />
-                        </div>
-                    </div>
-                </li>
+                    </li>
+                }
             }
         </ul>
-    }
-    else
-    {
-        <p>The game hasn't started yet. Click "Start New Game" to begin.</p>
-    }
+    </div>
 
-    <p>@_gameResult</p>
+    <!-- Player's Cards directly above Player1's spot -->
+    <div class="player-cards-container">
+        <!-- Player's score above the cards -->
+        <h4 class="player-hand-header">Player's Hand (@BlackjackService.CalculateHandValue(BlackjackService.GetPlayerHand()) points):</h4>
+        <div class="player-cards">
+            <ul class="card-list">
+                @if (BlackjackService.GetPlayerHand() != null && BlackjackService.GetPlayerHand().Count > 0)
+                {
+                    @foreach (Card card in BlackjackService.GetPlayerHand())
+                    {
+                        <li><img src="@GetCardImage(card)" alt="@card.ToString()" width="100" height="150" /></li>
+                    }
+                }
+            </ul>
+        </div>
+    </div>
 
-    <p>Player Balance: $@_playerBalance</p>
+    <!-- Player spots arranged horizontally below the dealer -->
+    <div class="player-spot player-1">Player1</div>
+    <div class="player-spot player-2">EMPTY</div>
+    <div class="player-spot player-3">EMPTY</div>
+    <div class="player-spot player-4">EMPTY</div>
+    <div class="player-spot player-5">EMPTY</div>
+    <div class="player-spot player-6">EMPTY</div>
 
-    <!-- Always show the "Start New Game" button when the game hasn't started -->
-    @if (BlackjackService.GetPlayerHand() == null || BlackjackService.GetDealerHand() == null)
-    {
-        <button @onclick="StartNewGame">Start New Game</button>
-    }
-    else
-    {
-        <!-- Show the Hit and Stand buttons only after the game has started -->
-        @if (!_isGameOver)
-        {
-            <button @onclick="PlayerHit" disabled="@_hasPlayerStood">Hit</button>
-            <button @onclick="PlayerStand" disabled="@_hasPlayerStood">Stand</button>
-        }
-        else
+    <!-- Game buttons (Start, Hit, Stand) with spacing between them -->
+    <div class="game-buttons">
+        @if (BlackjackService.GetPlayerHand() == null || BlackjackService.GetDealerHand() == null)
         {
             <button @onclick="StartNewGame">Start New Game</button>
         }
+        else
+        {
+            @if (!_isGameOver)
+            {
+                <button @onclick="PlayerHit" disabled="@_hasPlayerStood">Hit</button>
+                <button @onclick="PlayerStand" disabled="@_hasPlayerStood">Stand</button>
+            }
+            else
+            {
+                <button @onclick="StartNewGame">Start New Game</button>
+            }
+        }
+    </div>
+
+    <!-- Player Balance -->
+    <div class="player-balance">
+        <p>Player Balance: $@_playerBalance</p>
+    </div>
+
+    <!-- Game Result Message -->
+    @if (!string.IsNullOrEmpty(_gameResult))
+    {
+        <div class="game-result">
+            <p>@_gameResult</p>
+        </div>
     }
 </div>
 
+<!-- Table and Player Spot Styling -->
 <style>
     .card-list {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        justify-content: center;
         list-style-type: none;
         padding: 0;
         margin: 0;
@@ -92,7 +120,7 @@
 
     /* Flip Animation Styles */
     .card-container {
-        perspective: 1500px; /* Perspective for 3D effect */
+        perspective: 1500px;
     }
 
     .card {
@@ -116,6 +144,139 @@
 
     .card-back {
         transform: rotateY(180deg);
+    }
+
+    /* Background table styling */
+    .table-container {
+        background-image: url('/images/table_background.png');
+        background-size: cover;
+        position: relative;
+        width: 100%;
+        height: 600px;
+        border-radius: 50%;
+        margin: 20px auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    /* Dealer cards at the top */
+    .dealer {
+        position: absolute;
+        top: 10%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        width: 300px;
+    }
+
+    /* Player spots arranged horizontally below the dealer */
+    .player-spot {
+        position: absolute;
+        text-align: center;
+        width: 100px;
+        height: 100px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        line-height: 100px;
+        font-size: 1.2em;
+    }
+
+    /* Positions adjusted to align player spots below the dealer */
+    .player-1 {
+        left: 20%;
+        top: 70%;
+        transform: translate(-50%, -50%);
+    }
+
+    .player-2 {
+        left: 35%;
+        top: 70%;
+        transform: translate(-50%, -50%);
+    }
+
+    .player-3 {
+        left: 50%;
+        top: 70%;
+        transform: translate(-50%, -50%);
+    }
+
+    .player-4 {
+        left: 65%;
+        top: 70%;
+        transform: translate(-50%, -50%);
+    }
+
+    .player-5 {
+        left: 80%;
+        top: 70%;
+        transform: translate(-50%, -50%);
+    }
+
+    .player-6 {
+        left: 95%;
+        top: 70%;
+        transform: translate(-50%, -50%);
+    }
+
+    /* Player's score display (score above cards) */
+    .player-hand-header {
+        position: relative;
+        font-size: 1.5em;
+        text-align: center;
+        margin-bottom: 10px; /* Space between score and cards */
+        z-index: 20;
+    }
+
+    /* Player's card display (cards directly below score) */
+    .player-cards-container {
+        position: absolute;
+        top: 45%; /* Move the cards higher to prevent overlap */
+        left: 20%; /* Align with player-1 */
+        transform: translate(-50%, -50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .player-cards {
+        display: flex;
+        justify-content: center;
+        z-index: 10;
+    }
+
+    /* Player Balance positioning */
+    .player-balance {
+        position: absolute;
+        bottom: 10px;
+        text-align: center;
+        width: 200px;
+    }
+
+    /* Button positioning and spacing */
+    .game-buttons {
+        position: absolute;
+        top: 85%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        gap: 20px;
+    }
+
+    button {
+        padding: 10px;
+    }
+
+    .game-result {
+        position: absolute;
+        top: 20%;
+        left: 20%;
+        transform: translate(-50%, -50%);
+        font-size: 1.5em;
+        color: red;
     }
 </style>
 
@@ -152,12 +313,6 @@
     {
         await _hubConnection.InvokeAsync("SendMove", "gameId_123", _player, move);
         Logger.LogInformation($"Player {_player} sent move: {move}");
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await _hubConnection.InvokeAsync("LeaveGame", "gameId_123");
-        await _hubConnection.DisposeAsync();
     }
 
     private void StartNewGame()
@@ -265,7 +420,6 @@
         string suit = card.Suit.ToLower();
         string value = card.Value.ToLower();
 
-        // Convert abbreviated values to full names
         switch (value)
         {
             case "a":
@@ -282,13 +436,11 @@
                 break;
         }
 
-        // Append '2' for face cards to use 2nd style.
         if (value == "king" || value == "queen" || value == "jack")
         {
             return $"/CardImages/{value}_of_{suit}2.png";
         }
 
-        // Return the image path for numeric cards
         return $"/CardImages/{value}_of_{suit}.png";
     }
 }

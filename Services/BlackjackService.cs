@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿﻿using Microsoft.AspNetCore.SignalR;
 using CardGames.Hubs;
 
 namespace CardGames.Services
@@ -23,47 +23,23 @@ namespace CardGames.Services
             _dealerHand = new List<Card>();
             _dealerHandRevealed = false;
 
-            // Deal initial cards
-            _playerHand.Add(DrawCard());
-            _playerHand.Add(DrawCard());
-            _dealerHand.Add(DrawCard());  // Visible card
-            _dealerHand.Add(DrawCard());  // Hidden card
+            // Ensure we always have a valid hand before accessing it
+            if (_deck.Count >= 4) // Checking if there are enough cards in the deck to deal
+            {
+                _playerHand.Add(DrawCard());
+                _playerHand.Add(DrawCard());
+
+                _dealerHand.Add(DrawCard());  // Visible card
+                _dealerHand.Add(DrawCard());  // Hidden card
+            }
         }
 
-        public void PlayerStands(string playerName)
+        public List<Card> GetDealerHand()
         {
-            int playerValue = CalculateHandValue(_playerHand);
-            int dealerValue = CalculateHandValue(_dealerHand);
-
-            // Reveal dealer's second card
-            RevealDealerHand();
-
-            // Notify other players
-            _hubContext.Clients.All.SendAsync("ReceiveMove", playerName, "stands");
-
-            // Dealer logic
-            while (dealerValue < 17)
-            {
-                _dealerHand.Add(DrawCard());
-                dealerValue = CalculateHandValue(_dealerHand);
-            }
-
-            if (dealerValue > 21)
-            {
-                // Notify dealer bust
-                _hubContext.Clients.All.SendAsync("ReceiveMove", playerName, "Dealer busts! Player wins.");
-            }
-            else if (dealerValue >= playerValue)
-            {
-                // Notify dealer wins
-                _hubContext.Clients.All.SendAsync("ReceiveMove", playerName, "Dealer wins.");
-            }
-            else
-            {
-                // Notify player wins
-                _hubContext.Clients.All.SendAsync("ReceiveMove", playerName, "Player wins.");
-            }
+            return _dealerHand ?? new List<Card>(); // Ensure it returns an empty list if _dealerHand is null
         }
+
+        public List<Card> GetPlayerHand() => _playerHand;
 
         public void RevealDealerHand()
         {
@@ -72,6 +48,12 @@ namespace CardGames.Services
 
         public List<Card> GetVisibleDealerHand()
         {
+            // Check if _dealerHand is null or empty to avoid null reference
+            if (_dealerHand == null || !_dealerHand.Any())
+            {
+                return new List<Card>(); // Return an empty list to prevent the app from crashing
+            }
+
             if (_dealerHandRevealed)
             {
                 return _dealerHand;
@@ -106,11 +88,14 @@ namespace CardGames.Services
             return card;
         }
 
-        public List<Card> GetPlayerHand() => _playerHand;
-        public List<Card> GetDealerHand() => _dealerHand;
-
         public int CalculateHandValue(List<Card> hand)
         {
+            // Safeguard: return 0 if hand is null or empty
+            if (hand == null || hand.Count == 0)
+            {
+                return 0;
+            }
+
             int totalValue = 0;
             int aceCount = 0;
 
@@ -141,7 +126,7 @@ namespace CardGames.Services
             return totalValue;
         }
 
-        public virtual bool IsGameOver() => CalculateHandValue(_playerHand) >= 21 || CalculateHandValue(_dealerHand) >= 21;
+        public virtual bool IsGameOver() => CalculateHandValue(_playerHand) > 21 || CalculateHandValue(_dealerHand) > 21;
     }
 
     public class Card
