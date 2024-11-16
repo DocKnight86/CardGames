@@ -15,7 +15,7 @@
         <ul class="card-list">
             @if (BlackjackService.GetVisibleDealerHand() != null && BlackjackService.GetVisibleDealerHand().Count > 0)
             {
-                @foreach (Card card in BlackjackService.GetVisibleDealerHand())
+                @foreach (PlayingCard card in BlackjackService.GetVisibleDealerHand())
                 {
                     <li><img src="@GetCardImage(card)" alt="@card.ToString()" width="100" height="150" /></li>
                 }
@@ -47,7 +47,7 @@
             <ul class="card-list">
                 @if (BlackjackService.GetPlayerHand() != null && BlackjackService.GetPlayerHand().Count > 0)
                 {
-                    @foreach (Card card in BlackjackService.GetPlayerHand())
+                    @foreach (PlayingCard card in BlackjackService.GetPlayerHand())
                     {
                         <li><img src="@GetCardImage(card)" alt="@card.ToString()" width="100" height="150" /></li>
                     }
@@ -345,6 +345,12 @@
         // Notify others about the game start
         SendMove("started a new game");
 
+        int playerValue = BlackjackService.CalculateHandValue(BlackjackService.GetPlayerHand());
+        if (playerValue == 21)
+        {
+            EndGame(DetermineGameResult());
+        }
+
         StateHasChanged();
     }
 
@@ -415,25 +421,25 @@
         if (dealerValue > 21)
         {
             _playerBalance += 10; // Player wins $10
-            return "Dealer busts! Player wins.";
+            return "Dealer busts! Player wins +10 coins.";
         }
 
         if (dealerValue > playerValue)
         {
-            return "Dealer wins.";
+            return "Dealer wins. Player losses 5 coins.";
         }
 
         if (dealerValue == playerValue)
         {
             _playerBalance += 5; // Tie, refund $5
-            return "It's a tie.";
+            return "It's a tie. Player wins +5 coins";
         }
 
         _playerBalance += 10; // Player wins $10
-        return "Player wins!";
+        return "Player wins +10 coins.";
     }
 
-    private string GetCardImage(Card card)
+    private string GetCardImage(PlayingCard card)
     {
         string suit = card.Suit.ToLower();
         string value = card.Value.ToLower();

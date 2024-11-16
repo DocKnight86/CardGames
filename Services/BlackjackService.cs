@@ -5,9 +5,9 @@ namespace CardGames.Services
 {
     public class BlackjackService
     {
-        private List<Card> _deck;
-        private List<Card> _playerHand;
-        private List<Card> _dealerHand;
+        private List<PlayingCard> _deck;
+        private List<PlayingCard> _playerHand;
+        private List<PlayingCard> _dealerHand;
         private bool _dealerHandRevealed;
         private readonly IHubContext<GameHub> _hubContext; // Injecting SignalR Hub
 
@@ -18,9 +18,9 @@ namespace CardGames.Services
 
         public void InitializeGame()
         {
-            _deck = GenerateDeck();
-            _playerHand = new List<Card>();
-            _dealerHand = new List<Card>();
+            _deck = GenerateDeck(6); // Generate a deck of 6 decks of cards
+            _playerHand = new List<PlayingCard>();
+            _dealerHand = new List<PlayingCard>();
             _dealerHandRevealed = false;
 
             // Ensure we always have a valid hand before accessing it
@@ -34,24 +34,24 @@ namespace CardGames.Services
             }
         }
 
-        public List<Card> GetDealerHand()
+        public List<PlayingCard> GetDealerHand()
         {
-            return _dealerHand ?? new List<Card>(); // Ensure it returns an empty list if _dealerHand is null
+            return _dealerHand ?? new List<PlayingCard>(); // Ensure it returns an empty list if _dealerHand is null
         }
 
-        public List<Card> GetPlayerHand() => _playerHand;
+        public List<PlayingCard> GetPlayerHand() => _playerHand;
 
         public void RevealDealerHand()
         {
             _dealerHandRevealed = true;
         }
 
-        public List<Card> GetVisibleDealerHand()
+        public List<PlayingCard> GetVisibleDealerHand()
         {
             // Check if _dealerHand is null or empty to avoid null reference
             if (_dealerHand == null || !_dealerHand.Any())
             {
-                return new List<Card>(); // Return an empty list to prevent the app from crashing
+                return new List<PlayingCard>(); // Return an empty list to prevent the app from crashing
             }
 
             if (_dealerHandRevealed)
@@ -60,35 +60,46 @@ namespace CardGames.Services
             }
 
             // Only return the first card when the hand is not revealed
-            return new List<Card> { _dealerHand[0] };
+            return new List<PlayingCard> { _dealerHand[0] };
         }
 
-        private List<Card> GenerateDeck()
+        private List<PlayingCard> GenerateDeck(int numDecks)
         {
-            List<Card> deck = new List<Card>();
-            string[] suits = new[] { "Hearts", "Diamonds", "Clubs", "Spades" };
-            string[] values = new[] { "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A" };
+            List<PlayingCard> deck = [];
 
-            foreach (string suit in suits)
+            string[] suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
+            string[] values = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+
+            for (int i = 0; i < numDecks; i++)
             {
-                foreach (string value in values)
+                foreach (string suit in suits)
                 {
-                    deck.Add(new Card(suit, value));
+                    foreach (string value in values)
+                    {
+                        deck.Add(new PlayingCard(suit, value));
+                    }
                 }
             }
 
             Random random = new Random();
+
+            // DEBUG
+            foreach (PlayingCard playingCard in deck)
+            {
+                Console.WriteLine($"Playing Card:{playingCard.Suit} {playingCard.Value}");
+            }
+
             return deck.OrderBy(x => random.Next()).ToList();
         }
 
-        public Card DrawCard()
+        public PlayingCard DrawCard()
         {
-            Card card = _deck.First();
+            PlayingCard card = _deck.First();
             _deck.Remove(card);
             return card;
         }
 
-        public int CalculateHandValue(List<Card> hand)
+        public int CalculateHandValue(List<PlayingCard> hand)
         {
             // Safeguard: return 0 if hand is null or empty
             if (hand == null || hand.Count == 0)
@@ -99,7 +110,7 @@ namespace CardGames.Services
             int totalValue = 0;
             int aceCount = 0;
 
-            foreach (Card card in hand)
+            foreach (PlayingCard card in hand)
             {
                 if (int.TryParse(card.Value, out int cardValue))
                 {
@@ -129,12 +140,12 @@ namespace CardGames.Services
         public virtual bool IsGameOver() => CalculateHandValue(_playerHand) > 21 || CalculateHandValue(_dealerHand) > 21;
     }
 
-    public class Card
+    public class PlayingCard
     {
         public string Suit { get; }
         public string Value { get; }
 
-        public Card(string suit, string value)
+        public PlayingCard(string suit, string value)
         {
             Suit = suit;
             Value = value;
